@@ -5,7 +5,7 @@
   <title>Antwortscanner – ArUco Debug</title>
 
   <style>
-    body { font-family: Arial; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
     #video {
       width: 640px;
       height: 480px;
@@ -28,26 +28,15 @@
     }
   </style>
 
-  <!-- WICHTIG: zuerst die Funktion definieren -->
-  <script>
-    function onOpenCvReady() {
-      console.log("OpenCV geladen.");
-      startDetection();
-    }
-  </script>
-
-  <!-- danach OpenCV laden -->
-  <script src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
-
+  <!-- OpenCV laden -->
+  <script src="https://docs.opencv.org/4.x/opencv.js"></script>
 </head>
 
 <body>
-
   <h1>Antwortscanner – ArUco Debug</h1>
 
   <video id="video" autoplay></video>
   <canvas id="canvas" width="640" height="480"></canvas>
-
   <div id="output">Noch kein Marker erkannt…</div>
 
   <script>
@@ -56,12 +45,19 @@
     let ctx = canvas.getContext("2d");
     let output = document.getElementById("output");
 
+    // Kamera starten
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" }
     }).then(stream => {
       video.srcObject = stream;
       video.play();
     });
+
+    // Wird aufgerufen, wenn OpenCV vollständig geladen ist
+    cv['onRuntimeInitialized'] = () => {
+      console.log("OpenCV ist bereit.");
+      startDetection();
+    };
 
     function startDetection() {
       const dictionary = new cv.aruco.Dictionary(cv.aruco.DICT_4X4_50);
@@ -96,6 +92,5 @@
       detect();
     }
   </script>
-
 </body>
 </html>
