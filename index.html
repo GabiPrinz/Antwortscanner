@@ -1,64 +1,71 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Antwortscanner</title>
-
-  <!-- jsQR für QR-Erkennung -->
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  <!-- Chart.js für Balkendiagramm -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>Antwortscanner – ArUco</title>
+<script src="https://docs.opencv.org/4.x/opencv.js"></script>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  video { width: 400px; border: 2px solid black; }
+  #output { margin-top: 20px; font-size: 20px; }
+</style>
 </head>
 <body>
-  <header>
-    <h1>Antwortscanner</h1>
-    <div class="controls">
-      <button id="startBtn">Kamera starten</button>
-      <button id="stopBtn">Kamera stoppen</button>
-      <button id="resetBtn">Zähler zurücksetzen</button>
-      <span class="hint">Shortcut: Taste <strong>B</strong> → Balkendiagramm</span>
-    </div>
-  </header>
 
-  <main>
-    <div class="left">
-      <video id="video" autoplay muted playsinline></video>
-      <canvas id="overlay"></canvas>
-      <div id="info">Keine Erkennung</div>
-    </div>
+<h1>Antwortscanner – ArUco</h1>
+<p>Erkennt ArUco‑Marker (4x4_50) – IDs 1–40.</p>
 
-    <aside class="right">
-      <div class="panel">
-        <h2>Aktuelle Verteilung</h2>
-        <ul id="counts">
-          <li>A: <span id="countA">0</span></li>
-          <li>B: <span id="countB">0</span></li>
-          <li>C: <span id="countC">0</span></li>
-          <li>D: <span id="countD">0</span></li>
-        </ul>
-      </div>
+<video id="video" autoplay></video>
+<canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
-      <div class="panel">
-        <h2>Letzte Erkennung</h2>
-        <div id="last">—</div>
-      </div>
-    </aside>
-  </main>
+<div id="output">Letzte Erkennung: –</div>
 
-  <!-- Chart Overlay -->
-  <div id="chartOverlay" class="overlayHidden">
-    <div class="chartBox">
-      <canvas id="barChart"></canvas>
-      <div class="chartButtons">
-        <button id="closeChart">Schließen</button>
-        <button id="continueScan">Weiter scannen</button>
-      </div>
-    </div>
-  </div>
+<script>
+  // Kamera starten
+  const video = document.getElementById("video");
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => video.srcObject = stream);
 
-  <script src="script.js"></script>
+  // OpenCV initialisieren
+  function onOpenCvReady() {
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const output = document.getElementById("output");
+
+    const dict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50);
+    const parameters = new cv.aruco.DetectorParameters();
+
+    function scan() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        let src = cv.imread(canvas);
+        let corners = new cv.MatVector();
+        let ids = new cv.Mat();
+
+        cv.aruco.detectMarkers(src, dict, corners, ids, parameters);
+
+        if (!ids.empty()) {
+          let id = ids.intAt(0, 0);
+          output.innerText = "Letzte Erkennung: " + id;
+        }
+
+        src.delete();
+        corners.delete();
+        ids.delete();
+      }
+
+      requestAnimationFrame(scan);
+    }
+
+    scan();
+  }
+
+  // Warten bis OpenCV geladen ist
+  setTimeout(onOpenCvReady, 500);
+</script>
+
 </body>
 </html>
