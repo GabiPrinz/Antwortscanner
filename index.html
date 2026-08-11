@@ -2,8 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Antwortscanner – ArUco (ohne OpenCV)</title>
-
+  <title>Antwortscanner – ArUco mit OpenCV.js</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     #video, #canvas {
@@ -20,12 +19,12 @@
     }
   </style>
 
-  <!-- ArUco JS (reines JavaScript, kein OpenCV nötig) -->
-  <script src="https://cdn.jsdelivr.net/gh/jcmellado/js-aruco/build/aruco.js"></script>
+  <!-- OpenCV.js mit ArUco -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 </head>
 
 <body>
-  <h1>Antwortscanner – ArUco (ohne OpenCV)</h1>
+  <h1>Antwortscanner – ArUco mit OpenCV.js</h1>
 
   <video id="video" autoplay></video>
   <canvas id="canvas" width="640" height="480"></canvas>
@@ -40,44 +39,42 @@
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(stream => { video.srcObject = stream; video.play(); });
 
-    const detector = new AR.Detector();
+    function onOpenCvReady() {
+      const dictionary = new cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50);
+      const detector = new cv.aruco.ArucoDetector(dictionary);
 
-    function detect() {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      function detect() {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const src = cv.imread(canvas);
 
-      const markers = detector.detect(imageData);
+        const markerCorners = new cv.MatVector();
+        const markerIds = new cv.Mat();
 
-      if (markers.length > 0) {
-        const id = markers[0].id;
-        output.innerText = "Marker erkannt: " + id;
+        detector.detectMarkers(src, markerCorners, markerIds);
 
-        markers.forEach(marker => {
-          ctx.beginPath();
+        if (!markerIds.empty()) {
+          const id = markerIds.data32S[0];
+          output.innerText = "Marker erkannt: " + id;
 
-          // Sichtbare, kräftige Linien
-          ctx.strokeStyle = "#ff0000";   // Rot
-          ctx.lineWidth = 5;             // Dick
-          ctx.shadowColor = "#ff0000";   // Glow
-          ctx.shadowBlur = 10;
+          cv.aruco.drawDetectedMarkers(src, markerCorners, markerIds);
+        } else {
+          output.innerText = "Kein Marker erkannt…";
+        }
 
-          marker.corners.forEach((corner, i) => {
-            const next = marker.corners[(i + 1) % 4];
-            ctx.moveTo(corner.x, corner.y);
-            ctx.lineTo(next.x, next.y);
-          });
+        cv.imshow(canvas, src);
 
-          ctx.stroke();
-        });
+        src.delete();
+        markerCorners.delete();
+        markerIds.delete();
 
-      } else {
-        output.innerText = "Kein Marker erkannt…";
+        requestAnimationFrame(detect);
       }
 
-      requestAnimationFrame(detect);
+      detect();
     }
 
-    detect();
+    if (cv.getBuildInformation) onOpenCvReady();
+    else cv['onRuntimeInitialized'] = onOpenCvReady;
   </script>
 </body>
 </html>
