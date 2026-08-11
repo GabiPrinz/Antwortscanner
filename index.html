@@ -2,29 +2,74 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Antwortscanner – ArUco</title>
+<title>Antwortscanner – ArUco komplett</title>
 <script src="https://docs.opencv.org/4.x/opencv.js"></script>
+
 <style>
   body { font-family: sans-serif; padding: 20px; }
   video { width: 400px; border: 2px solid black; }
   #output { margin-top: 20px; font-size: 20px; }
+  #chart { margin-top: 30px; }
 </style>
 </head>
 <body>
 
-<h1>Antwortscanner – ArUco</h1>
-<p>Erkennt ArUco‑Marker (4x4_50) – IDs 1–40.</p>
+<h1>Antwortscanner – ArUco komplett</h1>
+<p>Erkennt ArUco‑Marker (4x4_50), Rotation (A/B/C/D) und zeigt ein Balkendiagramm.</p>
 
 <video id="video" autoplay></video>
 <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
 <div id="output">Letzte Erkennung: –</div>
 
+<canvas id="chart" width="400" height="300"></canvas>
+
 <script>
   // Kamera starten
   const video = document.getElementById("video");
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
     .then(stream => video.srcObject = stream);
+
+  // Balkendiagramm-Daten
+  const answers = { A: 0, B: 0, C: 0, D: 0 };
+
+  function drawChart() {
+    const c = document.getElementById("chart");
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, c.width, c.height);
+
+    const labels = ["A", "B", "C", "D"];
+    const values = labels.map(l => answers[l]);
+    const max = Math.max(...values, 1);
+
+    labels.forEach((label, i) => {
+      const barHeight = (values[i] / max) * 250;
+      ctx.fillStyle = "black";
+      ctx.fillRect(50 + i * 80, 280 - barHeight, 50, barHeight);
+      ctx.fillText(label, 65 + i * 80, 295);
+      ctx.fillText(values[i], 65 + i * 80, 260 - barHeight);
+    });
+  }
+
+  // Rotation → Antwort
+  function getAnswerFromRotation(corners) {
+    // Ecke oben links = Orientierung
+    const tl = corners.data32F.slice(0, 2);
+    const tr = corners.data32F.slice(2, 4);
+    const br = corners.data32F.slice(4, 6);
+    const bl = corners.data32F.slice(6, 8);
+
+    // Vektor oben
+    const dx = tr[0] - tl[0];
+    const dy = tr[1] - tl[1];
+
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+    if (angle > -45 && angle <= 45) return "A";
+    if (angle > 45 && angle <= 135) return "B";
+    if (angle > -135 && angle <= -45) return "D";
+    return "C";
+  }
 
   // OpenCV initialisieren
   function onOpenCvReady() {
@@ -48,8 +93,22 @@
         cv.aruco.detectMarkers(src, dict, corners, ids, parameters);
 
         if (!ids.empty()) {
-          let id = ids.intAt(0, 0);
-          output.innerText = "Letzte Erkennung: " + id;
+          let detected = [];
+
+          for (let i = 0; i < ids.rows; i++) {
+            let id = ids.intAt(i, 0);
+            let c = corners.get(i);
+
+            let answer = getAnswerFromRotation(c);
+            detected.push({ id, answer });
+
+            answers[answer]++;
+          }
+
+          output.innerText = "Letzte Erkennung: " +
+            detected.map(d => `${d.id} → ${d.answer}`).join(", ");
+
+          drawChart();
         }
 
         src.delete();
@@ -63,7 +122,7 @@
     scan();
   }
 
-  // Warten bis OpenCV geladen ist
+  // OpenCV braucht einen Moment zum Laden
   setTimeout(onOpenCvReady, 500);
 </script>
 
