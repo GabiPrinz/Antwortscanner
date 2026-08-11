@@ -2,22 +2,14 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Antwortscanner – ArUco Debug</title>
+  <title>Antwortscanner – ArUco (ohne OpenCV)</title>
 
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
-    #video {
+    #video, #canvas {
       width: 640px;
       height: 480px;
       background: #000;
-      display: block;
-      margin-bottom: 10px;
-    }
-    #canvas {
-      width: 640px;
-      height: 480px;
-      border: 1px solid #ccc;
-      background: #eee;
       display: block;
       margin-bottom: 10px;
     }
@@ -28,76 +20,61 @@
     }
   </style>
 
-  <!-- OpenCV laden -->
-  <script src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <!-- ArUco JS (reines JavaScript, kein OpenCV nötig) -->
+  <script src="https://cdn.jsdelivr.net/gh/jcmellado/js-aruco/build/aruco.js"></script>
 </head>
 
 <body>
-  <h1>Antwortscanner – ArUco Debug</h1>
+  <h1>Antwortscanner – ArUco (ohne OpenCV)</h1>
 
   <video id="video" autoplay></video>
   <canvas id="canvas" width="640" height="480"></canvas>
   <div id="output">Noch kein Marker erkannt…</div>
 
   <script>
-    let video = document.getElementById("video");
-    let canvas = document.getElementById("canvas");
-    let ctx = canvas.getContext("2d");
-    let output = document.getElementById("output");
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const output = document.getElementById("output");
 
-    // Kamera starten
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" }
-    }).then(stream => {
-      video.srcObject = stream;
-      video.play();
-    });
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => { video.srcObject = stream; video.play(); });
 
-    // Warten bis OpenCV vollständig geladen ist
-    function waitForOpenCV() {
-      if (typeof cv === "undefined" || !cv.getBuildInformation) {
-        console.log("Warte auf OpenCV...");
-        setTimeout(waitForOpenCV, 100);
-        return;
-      }
-      console.log("OpenCV ist bereit.");
-      startDetection();
-    }
+    const detector = new AR.Detector();
 
-    waitForOpenCV();
+    function detect() {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    function startDetection() {
-      const dictionary = new cv.aruco.Dictionary(cv.aruco.DICT_4X4_50);
-      const parameters = new cv.aruco.DetectorParameters();
-      const detector = new cv.aruco.ArucoDetector(dictionary, parameters);
+      const markers = detector.detect(imageData);
 
-      function detect() {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        let src = cv.imread(canvas);
+      if (markers.length > 0) {
+        const id = markers[0].id;
+        output.innerText = "Marker erkannt: " + id;
 
-        let corners = new cv.MatVector();
-        let ids = new cv.Mat();
+        // Marker zeichnen
+        markers.forEach(marker => {
+          ctx.beginPath();
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 3;
 
-        detector.detectMarkers(src, corners, ids);
+          marker.corners.forEach((corner, i) => {
+            const next = marker.corners[(i + 1) % 4];
+            ctx.moveTo(corner.x, corner.y);
+            ctx.lineTo(next.x, next.y);
+          });
 
-        if (!ids.empty()) {
-          output.innerText = "Marker erkannt: " + ids.data32S[0];
-          cv.aruco.drawDetectedMarkers(src, corners, ids);
-        } else {
-          output.innerText = "Kein Marker erkannt…";
-        }
+          ctx.stroke();
+        });
 
-        cv.imshow(canvas, src);
-
-        src.delete();
-        corners.delete();
-        ids.delete();
-
-        requestAnimationFrame(detect);
+      } else {
+        output.innerText = "Kein Marker erkannt…";
       }
 
-      detect();
+      requestAnimationFrame(detect);
     }
+
+    detect();
   </script>
 </body>
 </html>
