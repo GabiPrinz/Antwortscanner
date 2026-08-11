@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <title>Antwortscanner – ArUco Debug</title>
 
-<script src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
+  <!-- OpenCV laden -->
+  <script src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
 
   <style>
-    body { font-family: Arial; margin: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
     #video {
       width: 640px;
       height: 480px;
@@ -35,9 +39,13 @@
 
   <h1>Antwortscanner – ArUco Debug</h1>
 
+  <!-- Kamera -->
   <video id="video" autoplay></video>
+
+  <!-- Canvas für OpenCV -->
   <canvas id="canvas" width="640" height="480"></canvas>
 
+  <!-- Ausgabe -->
   <div id="output">Noch kein Marker erkannt…</div>
 
   <script>
@@ -46,6 +54,7 @@
     let ctx = canvas.getContext("2d");
     let output = document.getElementById("output");
 
+    // Kamera starten
     navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: "environment",
@@ -57,7 +66,9 @@
       video.play();
     });
 
+    // Wird automatisch aufgerufen, wenn OpenCV fertig geladen ist
     function onOpenCvReady() {
+      console.log("OpenCV geladen.");
       startDetection();
     }
 
@@ -67,7 +78,10 @@
       const detector = new cv.aruco.ArucoDetector(dictionary, parameters);
 
       function detect() {
+        // Videobild ins Canvas kopieren
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Canvas in OpenCV-Matrix umwandeln
         let src = cv.imread(canvas);
 
         let corners = new cv.MatVector();
@@ -83,6 +97,7 @@
         }
 
         cv.imshow(canvas, src);
+
         src.delete();
         corners.delete();
         ids.delete();
