@@ -53,11 +53,18 @@
       video.play();
     });
 
-    // Wird aufgerufen, wenn OpenCV vollständig geladen ist
-    cv['onRuntimeInitialized'] = () => {
+    // Warten bis OpenCV vollständig geladen ist
+    function waitForOpenCV() {
+      if (typeof cv === "undefined" || !cv.getBuildInformation) {
+        console.log("Warte auf OpenCV...");
+        setTimeout(waitForOpenCV, 100);
+        return;
+      }
       console.log("OpenCV ist bereit.");
       startDetection();
-    };
+    }
+
+    waitForOpenCV();
 
     function startDetection() {
       const dictionary = new cv.aruco.Dictionary(cv.aruco.DICT_4X4_50);
