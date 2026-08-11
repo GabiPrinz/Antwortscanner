@@ -4,14 +4,8 @@
   <meta charset="UTF-8">
   <title>Antwortscanner – ArUco Debug</title>
 
-  <!-- OpenCV laden -->
-  <script src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
+    body { font-family: Arial; margin: 20px; }
     #video {
       width: 640px;
       height: 480px;
@@ -33,19 +27,27 @@
       margin-top: 10px;
     }
   </style>
+
+  <!-- WICHTIG: Funktion zuerst definieren -->
+  <script>
+    function onOpenCvReady() {
+      console.log("OpenCV geladen.");
+      startDetection();
+    }
+  </script>
+
+  <!-- OpenCV danach laden -->
+  <script src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvReady();"></script>
+
 </head>
 
 <body>
 
   <h1>Antwortscanner – ArUco Debug</h1>
 
-  <!-- Kamera -->
   <video id="video" autoplay></video>
-
-  <!-- Canvas für OpenCV -->
   <canvas id="canvas" width="640" height="480"></canvas>
 
-  <!-- Ausgabe -->
   <div id="output">Noch kein Marker erkannt…</div>
 
   <script>
@@ -54,23 +56,12 @@
     let ctx = canvas.getContext("2d");
     let output = document.getElementById("output");
 
-    // Kamera starten
     navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "environment",
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
+      video: { facingMode: "environment" }
     }).then(stream => {
       video.srcObject = stream;
       video.play();
     });
-
-    // Wird automatisch aufgerufen, wenn OpenCV fertig geladen ist
-    function onOpenCvReady() {
-      console.log("OpenCV geladen.");
-      startDetection();
-    }
 
     function startDetection() {
       const dictionary = new cv.aruco.Dictionary(cv.aruco.DICT_4X4_50);
@@ -78,10 +69,7 @@
       const detector = new cv.aruco.ArucoDetector(dictionary, parameters);
 
       function detect() {
-        // Videobild ins Canvas kopieren
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Canvas in OpenCV-Matrix umwandeln
         let src = cv.imread(canvas);
 
         let corners = new cv.MatVector();
