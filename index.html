@@ -1,83 +1,109 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Antwortscanner – ArUco Debug</title>
-<script src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <meta charset="UTF-8">
+  <title>Antwortscanner – ArUco Debug</title>
 
-<style>
-  body { font-family: sans-serif; padding: 20px; }
-  video { width: 400px; border: 2px solid black; }
-  #output { margin-top: 20px; font-size: 20px; }
-  #chart { margin-top: 30px; }
-</style>
+  <!-- OpenCV laden -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #video {
+      width: 640px;
+      height: 480px;
+      background: #000;
+      display: block;
+      margin-bottom: 10px;
+    }
+    #canvas {
+      width: 640px;
+      height: 480px;
+      border: 1px solid #ccc;
+      background: #eee;
+      display: block;
+      margin-bottom: 10px;
+    }
+    #output {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>Antwortscanner – ArUco Debug</h1>
-<p>Zeigt erkannte Marker mit grünen Rahmen und IDs direkt im Videobild.</p>
+  <h1>Antwortscanner – ArUco Debug</h1>
 
-<video id="video" autoplay></video>
-<canvas id="canvas" width="640" height="480"></canvas>
+  <!-- Kamera -->
+  <video id="video" autoplay></video>
 
-<div id="output">Letzte Erkennung: –</div>
+  <!-- Canvas für OpenCV -->
+  <canvas id="canvas" width="640" height="480"></canvas>
 
-<script>
-  // Kamera starten
-  const video = document.getElementById("video");
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-    .then(stream => video.srcObject = stream);
+  <!-- Ausgabe -->
+  <div id="output">Noch kein Marker erkannt…</div>
 
-  function onOpenCvReady() {
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const output = document.getElementById("output");
+  <script>
+    let video = document.getElementById("video");
+    let canvas = document.getElementById("canvas");
+    let ctx = canvas.getContext("2d");
+    let output = document.getElementById("output");
 
-    const dict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50);
-    const parameters = new cv.aruco.DetectorParameters();
+    // Kamera starten
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    }).then(stream => {
+      video.srcObject = stream;
+      video.play();
+    });
 
-    function scan() {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+    // Warten bis OpenCV geladen ist
+    function onOpenCvReady() {
+      console.log("OpenCV geladen.");
+      startDetection();
+    }
+
+    function startDetection() {
+      const dictionary = new cv.aruco.Dictionary(cv.aruco.DICT_4X4_50);
+      const parameters = new cv.aruco.DetectorParameters();
+      const detector = new cv.aruco.ArucoDetector(dictionary, parameters);
+
+      function detect() {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
         let src = cv.imread(canvas);
+
         let corners = new cv.MatVector();
         let ids = new cv.Mat();
 
-        cv.aruco.detectMarkers(src, dict, corners, ids, parameters);
-
-        // Debug: Marker sichtbar machen
-        cv.aruco.drawDetectedMarkers(src, corners, ids);
-
-        // Debug: Bild anzeigen
-        cv.imshow(canvas, src);
+        detector.detectMarkers(src, corners, ids);
 
         if (!ids.empty()) {
-          let detected = [];
-
-          for (let i = 0; i < ids.rows; i++) {
-            let id = ids.intAt(i, 0);
-            detected.push(id);
-          }
-
-          output.innerText = "Letzte Erkennung: " + detected.join(", ");
+          output.innerText = "Marker erkannt: " + ids.data32S[0];
+          cv.aruco.drawDetectedMarkers(src, corners, ids);
+        } else {
+          output.innerText = "Kein Marker erkannt…";
         }
 
+        cv.imshow(canvas, src);
         src.delete();
         corners.delete();
         ids.delete();
+
+        requestAnimationFrame(detect);
       }
 
-      requestAnimationFrame(scan);
+      detect();
     }
-
-    scan();
-  }
-
-  setTimeout(onOpenCvReady, 500);
-</script>
+  </script>
 
 </body>
 </html>
