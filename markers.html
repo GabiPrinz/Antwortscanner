@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>ArUco Marker Generator – 40 Stück</title>
+<script src="https://docs.opencv.org/4.x/opencv.js"></script>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .marker { margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<h1>40 ArUco Marker (4x4_50)</h1>
+<p>Die Marker werden direkt im Browser erzeugt – keine Downloads, keine externen Dateien.</p>
+
+<div id="container"></div>
+
+<script>
+  function generateMarkers() {
+    const dict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50);
+    const container = document.getElementById("container");
+
+    for (let id = 0; id < 40; id++) {
+      let img = new cv.Mat();
+      cv.aruco.generateImageMarker(dict, id, 400, img);
+
+      let canvas = document.createElement("canvas");
+      cv.imshow(canvas, img);
+
+      let div = document.createElement("div");
+      div.className = "marker";
+      div.innerHTML = `<h2>Marker ${id}</h2>`;
+      div.appendChild(canvas);
+
+      container.appendChild(div);
+      img.delete();
+    }
+  }
+
+  // OpenCV braucht einen Moment zum Laden
+  setTimeout(generateMarkers, 500);
+</script>
+
+</body>
+</html>
