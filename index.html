@@ -54,8 +54,12 @@
 
         markers.forEach(marker => {
           ctx.beginPath();
-          ctx.strokeStyle = "red";
-          ctx.lineWidth = 3;
+
+          // Sichtbare, kräftige Linien
+          ctx.strokeStyle = "#ff0000";   // Rot
+          ctx.lineWidth = 5;             // Dick
+          ctx.shadowColor = "#ff0000";   // Glow
+          ctx.shadowBlur = 10;
 
           marker.corners.forEach((corner, i) => {
             const next = marker.corners[(i + 1) % 4];
