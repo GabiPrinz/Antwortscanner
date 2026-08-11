@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Antwortscanner</title>
+
+  <!-- jsQR für QR-Erkennung -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <!-- Chart.js für Balkendiagramm -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Antwortscanner</h1>
+    <div class="controls">
+      <button id="startBtn">Kamera starten</button>
+      <button id="stopBtn">Kamera stoppen</button>
+      <button id="resetBtn">Zähler zurücksetzen</button>
+      <span class="hint">Shortcut: Taste <strong>B</strong> → Balkendiagramm</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="left">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
+      <div id="info">Keine Erkennung</div>
+    </div>
+
+    <aside class="right">
+      <div class="panel">
+        <h2>Aktuelle Verteilung</h2>
+        <ul id="counts">
+          <li>A: <span id="countA">0</span></li>
+          <li>B: <span id="countB">0</span></li>
+          <li>C: <span id="countC">0</span></li>
+          <li>D: <span id="countD">0</span></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>Letzte Erkennung</h2>
+        <div id="last">—</div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Chart Overlay -->
+  <div id="chartOverlay" class="overlayHidden">
+    <div class="chartBox">
+      <canvas id="barChart"></canvas>
+      <div class="chartButtons">
+        <button id="closeChart">Schließen</button>
+        <button id="continueScan">Weiter scannen</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

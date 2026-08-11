@@ -1,0 +1,27 @@
+body { font-family: "Segoe UI", Roboto, Arial, sans-serif; margin: 0; color: #222; }
+header { background:#0b5; padding:12px; color:#fff; display:flex; align-items:center; justify-content:space-between; }
+header h1 { margin:0; font-size:20px; }
+.controls { display:flex; gap:8px; align-items:center; }
+.controls button { padding:6px 10px; border-radius:4px; border: none; cursor:pointer; }
+.controls .hint { font-size:13px; opacity:0.9; margin-left:10px; color:#003300; }
+
+main { display:flex; gap:12px; padding:12px; align-items:flex-start; }
+.left { position:relative; flex:1; max-width:70%; }
+video { width:100%; border:2px solid #333; border-radius:6px; background:#000; }
+#overlay { position:absolute; left:0; top:0; pointer-events:none; }
+#info { margin-top:8px; font-weight:600; }
+
+.right { width:260px; }
+.panel { background:#f7f7f7; padding:10px; border-radius:6px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+.panel h2 { margin:0 0 8px 0; font-size:16px; }
+#counts { list-style:none; padding:0; margin:0; font-size:18px; }
+#counts li { margin:6px 0; }
+
+.overlayHidden { display:none; }
+.overlayVisible {
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.55); z-index:9999;
+}
+.chartBox { background:#fff; padding:18px; border-radius:8px; width:80%; max-width:900px; box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+.chartButtons { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+.chartButtons button { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
